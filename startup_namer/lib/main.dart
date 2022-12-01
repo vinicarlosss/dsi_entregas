@@ -34,6 +34,7 @@ class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
   final _saved = <WordPair>{};
   final _biggerFont = const TextStyle(fontSize: 18);
+  bool cardMode = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,34 +45,50 @@ class _RandomWordsState extends State<RandomWords> {
             icon: const Icon(Icons.list),
             onPressed: _pushSaved,
             tooltip: 'Saved Suggestions',
+          ),
+          IconButton(
+              onPressed: ((){
+                setState(() {
+                  cardMode = !cardMode;
+                });
+              }
+              ),
+              tooltip: cardMode ? 'List Visualization' : 'Card Mode Visualization',
+              icon: const Icon(Icons.autorenew),
           )
         ],
       ),
-      body: _buildSuggestions(),
+      body: _buildSuggestions(cardMode),
     );
   }
 
   @override
-  Widget _buildSuggestions() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemBuilder: (context, i) {
-        if (i.isOdd) return const Divider();
+  Widget _buildSuggestions(cardMode) {
+    if(!cardMode){
+      return ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemBuilder: (context, i) {
+          if (i.isOdd) return const Divider();
 
-        final index = i ~/ 2;
-        if (index >= _suggestions.length) {
-          _suggestions.addAll(generateWordPairs().take(10));
-        }
-        final alreadySaved = _saved.contains(_suggestions[index]);
-        return _buildRow(_suggestions[index], alreadySaved);
-      },
-    );
+          final index = i ~/ 2;
+          if (index >= _suggestions.length) {
+            _suggestions.addAll(generateWordPairs().take(10));
+          }
+          final alreadySaved = _saved.contains(_suggestions[index]);
+          return _buildRow(_suggestions[index], index);
+        },
+      );
+    }else{
+      return _visualizationCard();
+    }
+
   }
 
-  Widget _buildRow(WordPair pair, alreadySaved){
+  Widget _buildRow(WordPair pair, int index){
+    final alreadySaved = _saved.contains(_suggestions[index]);
     return ListTile(
       title: Text(
-        pair.asPascalCase,
+        _suggestions[index].asPascalCase,
         style: _biggerFont,
       ),
       trailing: Icon(
@@ -87,6 +104,27 @@ class _RandomWordsState extends State<RandomWords> {
             _saved.add(pair);
           }
         });
+      },
+    );
+  }
+
+  Widget _visualizationCard() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16.0),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 60,
+          mainAxisSpacing: 60,
+          childAspectRatio: 8),
+      itemCount: _suggestions.length,
+      itemBuilder: (context, index) {
+        if (index >= _suggestions.length) {
+          _suggestions.addAll(generateWordPairs().take(10));
+        }
+        final alreadySaved = _saved.contains(_suggestions[index]);
+        return Column(
+          children: [_buildRow(_suggestions[index], index)],
+        );
       },
     );
   }
@@ -120,6 +158,8 @@ class _RandomWordsState extends State<RandomWords> {
       ),
     );
   }
+
+
 
 }
 
